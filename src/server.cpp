@@ -66,19 +66,20 @@ void handle_client(int server_fd) {
     }
 
     HttpRequest req = parse_tokens(buffer);
-    // std::cout << "Response \n" << buffer << std::endl;
     std::cout << "Request Object : " << std::endl;
     std::cout << req << std::endl;
 
-    const char *success_responses =
-        "HTTP/1.0 200 OK\r\n"
-        "Content-Type : text\r\n"
-        "Content-Length: 48\r\n"
-        "Connection: close\r\n"
-        "\r\n"
-        "<html><body><h1>Hello, World!</h1></body></html>";
+    if (req.path == "/") {
+      HttpResponse res(200, "Welcome to Home Page");
+      res.send(client_fd);
+    } else if (req.path == "/about") {
+      HttpResponse res(200, "Welcome to About Page");
+      res.send(client_fd);
+    } else {
+      HttpResponse res(200, "Welcome to Some Other Page");
+      res.send(client_fd);
+    }
 
-    write(client_fd, success_responses, strlen(success_responses));
     close(client_fd);
     exit(EXIT_SUCCESS);
   }
