@@ -69,15 +69,13 @@ void handle_client(int server_fd) {
     std::cout << "Request Object : " << std::endl;
     std::cout << req << std::endl;
 
+    HttpResponse res;
     if (req.path == "/") {
-      HttpResponse res(200, "Welcome to Home Page");
-      res.send(client_fd);
+      res.send_html(client_fd, 200, "../templates/index.html");
     } else if (req.path == "/about") {
-      HttpResponse res(200, "Welcome to About Page");
-      res.send(client_fd);
+      res.send_text(client_fd, 401, "Unauthorized");
     } else {
-      HttpResponse res(200, "Welcome to Some Other Page");
-      res.send(client_fd);
+      res.send_text(client_fd, 404, "Not Found");
     }
 
     close(client_fd);

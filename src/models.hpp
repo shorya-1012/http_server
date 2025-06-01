@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <fstream>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -28,6 +29,12 @@ enum HttpMethods {
   PATCH,
   DELETE,
   UNKNOWN,
+};
+
+template <typename T> struct DataPair {
+  bool has_error;
+  T data;
+  DataPair<T>(bool has_error, T data) : has_error(has_error), data(data) {}
 };
 
 struct HttpRequest {
@@ -68,19 +75,27 @@ struct HttpRequest {
 };
 
 struct HttpResponse {
-  uint16_t status;
-  std::string content_type;
-  std::string content;
-  HttpResponse(uint16_t status, std::string content) {
-    this->status = status;
-    this->content = "text";
-    this->content = content;
+  void send_text(int client_fd, uint16_t status, std::string content) {
+    auto response = construct_response(status, "text", content);
+    write(client_fd, response.c_str(), response.size());
   }
-  std::string construct_text_response() {
+  void send_html(int client_fd, uint16_t status, std::string path) {
+    DataPair file_data = read_file(path);
+    if (file_data.has_error) {
+      send_text(client_fd, 404, file_data.data);
+      return;
+    }
+    auto response = construct_response(status, "html", file_data.data);
+    write(client_fd, response.c_str(), response.size());
+  }
+
+private:
+  std::string construct_response(uint16_t status, std::string type,
+                                 std::string &content) {
     std::stringstream res;
 
     res << "HTTP/1.1 " << status << " " << response_codes.at(status) << "\r\n";
-    res << "Content-Type : text\r\n";
+    res << "Content-Type : " << type << "\r\n";
     res << "Content-Length: " << content.size() << "\r\n";
     res << "Connection: close\r\n";
     res << "\r\n";
@@ -88,9 +103,15 @@ struct HttpResponse {
 
     return res.str();
   }
-  void send(int client_fd) {
-    auto response = construct_text_response();
-    write(client_fd, response.c_str(), response.size());
+  DataPair<std::string> read_file(std::string &path) {
+    std::ifstream infile(path);
+    if (!infile) {
+      return DataPair<std::string>(true, "Unable to find HTML file");
+    }
+    std::ostringstream file_data;
+    file_data << infile.rdbuf();
+
+    return DataPair<std::string>(false, file_data.str());
   }
 };
 // const char *success_responses =
