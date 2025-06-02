@@ -1,6 +1,7 @@
 #include "server.hpp"
 #include "models.hpp"
 #include "utils.hpp"
+#include <asm-generic/socket.h>
 #include <iostream>
 #include <netinet/in.h>
 #include <string.h>
@@ -9,11 +10,7 @@
 #include <unistd.h>
 
 int init_server(int port) {
-  int server_fd;
-  int bind_result;
-  struct sockaddr_in address;
-
-  server_fd = socket(AF_INET, SOCK_STREAM, 0);
+  int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
   if (server_fd < 0) {
     perror("Failed to create socket connection\n");
@@ -21,14 +18,20 @@ int init_server(int port) {
     exit(EXIT_FAILURE);
   }
 
+  int sock_opt = 1;
+  if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &sock_opt,
+                 sizeof(sock_opt)) == -1) {
+    std::cerr << "setsockopt Failed\n";
+  }
+
+  struct sockaddr_in address;
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = INADDR_ANY;
   address.sin_port = htons(port);
 
-  bind_result = bind(server_fd, (struct sockaddr *)&address, sizeof(address));
-  if (bind_result == -1) {
+  if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) == -1) {
     std::cerr << "Failed to bind socket to fd " << server_fd
-              << " To prot : " << port << std::endl;
+              << " To port : " << port << std::endl;
     exit(EXIT_FAILURE);
   }
 
@@ -84,5 +87,12 @@ void handle_client(int server_fd) {
   close(client_fd);
   while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
     std::cout << "Reaped Process " << pid << std::endl;
+  }
+}
+
+void run(int port) {
+  int server_fd = init_server(port);
+  while (true) {
+    handle_client(server_fd);
   }
 }
