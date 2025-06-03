@@ -5,9 +5,14 @@
 #include <iostream>
 #include <netinet/in.h>
 #include <string.h>
+#include <string>
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+void Server::add(std::string path, RouteHandlerPtr handler_fn) {
+  this->routes[path] = handler_fn;
+}
 
 int Server::init_server(int port) {
   int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -72,13 +77,19 @@ void Server::handle_client(int server_fd) {
     std::cout << "Request Object : " << std::endl;
     std::cout << req << std::endl;
 
-    HttpResponse res;
-    if (req.path == "/") {
-      res.send_html(client_fd, 200, "../templates/index.html");
-    } else if (req.path == "/about") {
-      res.send_text(client_fd, 401, "Unauthorized");
+    HttpResponse res(client_fd);
+    // if (req.path == "/") {
+    //   res.send_html(client_fd, 200, "../templates/index.html");
+    // } else if (req.path == "/about") {
+    //   res.send_text(client_fd, 401, "Unauthorized");
+    // } else {
+    //   res.send_text(client_fd, 404, "Not Found");
+    // }
+    std::string path = req.path;
+    if (routes.find(path) == routes.end()) {
+      res.send_text(404, "Not Found");
     } else {
-      res.send_text(client_fd, 404, "Not Found");
+      routes[path](req, res);
     }
 
     close(client_fd);

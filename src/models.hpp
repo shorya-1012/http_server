@@ -75,14 +75,15 @@ struct HttpRequest {
 };
 
 struct HttpResponse {
-  void send_text(int client_fd, uint16_t status, std::string content) {
+  HttpResponse(int client_fd) : client_fd(client_fd) {};
+  void send_text(uint16_t status, std::string content) {
     auto response = construct_response(status, "text", content);
     write(client_fd, response.c_str(), response.size());
   }
-  void send_html(int client_fd, uint16_t status, std::string path) {
+  void send_html(uint16_t status, std::string path) {
     DataPair file_data = read_file(path);
     if (file_data.has_error) {
-      send_text(client_fd, 404, file_data.data);
+      send_text(404, file_data.data);
       return;
     }
     auto response = construct_response(status, "html", file_data.data);
@@ -90,6 +91,7 @@ struct HttpResponse {
   }
 
 private:
+  int client_fd;
   std::string construct_response(uint16_t status, std::string type,
                                  std::string &content) {
     std::stringstream res;
