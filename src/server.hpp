@@ -1,5 +1,9 @@
 #pragma once
 
-int init_server(int port);
-void handle_client(int server_fd);
-void run(int port);
+struct Server {
+  void run(int port);
+
+private:
+  int init_server(int port);
+  void handle_client(int server_fd);
+};

@@ -1,6 +1,6 @@
 #include "server.hpp"
 #include "models.hpp"
-#include "utils.hpp"
+#include "parser.hpp"
 #include <asm-generic/socket.h>
 #include <iostream>
 #include <netinet/in.h>
@@ -9,7 +9,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-int init_server(int port) {
+int Server::init_server(int port) {
   int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
   if (server_fd < 0) {
@@ -46,7 +46,7 @@ int init_server(int port) {
   return server_fd;
 }
 
-void handle_client(int server_fd) {
+void Server::handle_client(int server_fd) {
   int pid = 0;
   struct sockaddr_in addr;
   int client_fd = -1;
@@ -90,7 +90,7 @@ void handle_client(int server_fd) {
   }
 }
 
-void run(int port) {
+void Server::run(int port) {
   int server_fd = init_server(port);
   while (true) {
     handle_client(server_fd);
