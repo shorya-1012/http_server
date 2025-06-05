@@ -1,7 +1,15 @@
-#include "parser.hpp"
+#include "utils.hpp"
 #include "models.hpp"
 #include <cstddef>
+#include <cstring>
 #include <vector>
+
+bool str_ends_with(std::string &str, std::string pattern) {
+  if (pattern.size() > str.size())
+    return false;
+  size_t i = str.size() - pattern.size();
+  return memcmp(&str[i], pattern.c_str(), pattern.size()) == 0;
+}
 
 std::vector<std::string> split_str(const std::string &buffer,
                                    const std::string delimiter) {

@@ -89,6 +89,16 @@ struct HttpResponse {
     auto response = construct_response(status, "html", file_data.data);
     write(client_fd, response.c_str(), response.size());
   }
+  void send_css(uint16_t status, std::string path) {
+    std::string file_path = "../public/" + path;
+    DataPair file_data = read_file(file_path);
+    if (file_data.has_error) {
+      send_text(404, file_data.data);
+      return;
+    }
+    auto response = construct_response(status, "text/css", file_data.data);
+    write(client_fd, response.c_str(), response.size());
+  }
 
 private:
   int client_fd;
@@ -116,10 +126,3 @@ private:
     return DataPair<std::string>(false, file_data.str());
   }
 };
-// const char *success_responses =
-//     "HTTP/1.0 200 OK\r\n"
-//     "Content-Type : text\r\n"
-//     "Content-Length: 48\r\n"
-//     "Connection: close\r\n"
-//     "\r\n"
-//     "<html><body><h1>Hello, World!</h1></body></html>";

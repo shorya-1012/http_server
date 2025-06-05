@@ -4,15 +4,15 @@
 int main(int argc, char *argv[]) {
   Server server;
 
-  server.add("/", [](HttpRequest &req, HttpResponse &res) {
+  server.add_routes("/", [](HttpRequest &req, HttpResponse &res) {
     res.send_html(200, "../templates/index.html");
   });
 
-  server.add("/about", [](HttpRequest &req, HttpResponse &res) {
+  server.add_routes("/about", [](HttpRequest &req, HttpResponse &res) {
     res.send_text(200, "Welcome to About Page");
   });
 
-  server.add("/foo", [](HttpRequest &req, HttpResponse &res) {
+  server.add_routes("/foo", [](HttpRequest &req, HttpResponse &res) {
     res.send_text(200, "BAR");
   });
 

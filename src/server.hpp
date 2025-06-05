@@ -6,7 +6,7 @@
 
 typedef void (*RouteHandlerPtr)(HttpRequest &req, HttpResponse &res);
 struct Server {
-  void add(std::string path, RouteHandlerPtr handler_fn);
+  void add_routes(std::string path, RouteHandlerPtr handler_fn);
   void run(int port);
 
 private:
