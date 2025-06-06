@@ -12,5 +12,5 @@ struct Server {
 private:
   std::unordered_map<std::string, RouteHandlerPtr> routes;
   int init_server(int port);
-  void handle_client(int server_fd);
+  void handle_response(int client_fd);
 };

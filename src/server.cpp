@@ -1,10 +1,10 @@
 #include "server.hpp"
 #include "models.hpp"
+#include "thread_pool.hpp"
 #include "utils.hpp"
 #include <asm-generic/socket.h>
 #include <iostream>
 #include <netinet/in.h>
-#include <string.h>
 #include <string>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -51,55 +51,45 @@ int Server::init_server(int port) {
   return server_fd;
 }
 
-void Server::handle_client(int server_fd) {
-  int pid = 0;
-  struct sockaddr_in addr;
-  int client_fd = -1;
-  // char buffer[4096];
+void Server::handle_response(int client_fd) {
   std::string buffer(4096, '\0');
-  socklen_t addr_len = sizeof(addr);
-
-  client_fd = accept(server_fd, (struct sockaddr *)&addr, &addr_len);
-  if (client_fd < 0) {
-    std::cerr << "Failed to create clinet Connection\n";
-    return;
+  int bytes_read = read(client_fd, &buffer[0], buffer.size());
+  if (bytes_read > 0) {
+    buffer.resize(bytes_read);
   }
 
-  pid = fork();
+  HttpRequest req = parse_tokens(buffer);
+  std::cout << "Request Object : " << std::endl;
+  std::cout << req << std::endl;
 
-  if (pid == 0) {
-    int bytes_read = read(client_fd, &buffer[0], buffer.size());
-    if (bytes_read > 0) {
-      buffer.resize(bytes_read);
-    }
+  HttpResponse res(client_fd);
 
-    HttpRequest req = parse_tokens(buffer);
-    std::cout << "Request Object : " << std::endl;
-    std::cout << req << std::endl;
-
-    HttpResponse res(client_fd);
-
-    std::string path = req.path;
-    if (str_ends_with(path, ".css")) {
-      res.send_css(200, path);
-    } else if (routes.find(path) == routes.end()) {
-      res.send_text(404, "Not Found");
-    } else {
-      routes[path](req, res);
-    }
-
-    close(client_fd);
-    exit(EXIT_SUCCESS);
+  std::string path = req.path;
+  if (str_ends_with(path, ".css")) {
+    res.send_css(200, path);
+  } else if (routes.find(path) == routes.end()) {
+    res.send_text(404, "Not Found");
+  } else {
+    routes[path](req, res);
   }
+
   close(client_fd);
-  while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
-    std::cout << "Reaped Process " << pid << std::endl;
-  }
 }
 
 void Server::run(int port) {
   int server_fd = init_server(port);
+  ThreadPool thread_pool(8);
+
   while (true) {
-    handle_client(server_fd);
+    struct sockaddr_in addr;
+    socklen_t addr_len = sizeof(addr);
+
+    int client_fd = accept(server_fd, (struct sockaddr *)&addr, &addr_len);
+    if (client_fd < 0) {
+      std::cerr << "Failed to create clinet Connection\n";
+      continue;
+    }
+
+    thread_pool.push([this, client_fd] { this->handle_response(client_fd); });
   }
 }
