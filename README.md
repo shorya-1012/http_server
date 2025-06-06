@@ -1,11 +1,11 @@
 # Simple HTTP Server in C++
 
-This is a basic HTTP server implemented from scratch in C++ with support for serving HTML, plain text, and CSS files.
+This is a basic Multi-Threaded HTTP Server implemented from scratch in C++ with support for serving HTML, plain text, and CSS files.
 
 ## Features
 
 - Handle multiple routes
-- Concurrent handling using `fork()`
+- Implements Multi-Threading using a Thread Pool.
 - Serve static HTML and CSS files
 - Send plain text responses
 
